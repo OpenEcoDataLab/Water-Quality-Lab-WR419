@@ -1,0 +1,197 @@
+---
+title: "Intro to Water Quality Analysis (R you ready!)"
+author: "Matthew Ross"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  ioslides_presentation:
+    incremental: true
+    widescreen: true
+    smaller: true
+    transition: 0.01
+editor_options: 
+  chunk_output_type: console
+---
+
+<style>
+slides > slide {
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+}
+</style>
+
+
+## Why data analysis in a water quality lab? 
+
+- Big Data, everywhere all the time
+- Sensors
+- Jobs
+
+## Why R for data analysis?
+
+- Free
+- Dynamic
+- Powerful
+- Welcoming
+- Most importantly... I use it!
+
+## I've never used R and you're scaring me
+- Not a problem
+- We'll provide all the support you need to incorporate it into your work for this 
+class
+
+## Some core basics {.build}
+
+- R is an object oriented language
+- This means specific data types can do specific things.
+
+```{r numeric vector}
+#Make a vector 
+this.is.a.numeric.vector = c(1,2)
+#Print the vector
+print(this.is.a.numeric.vector)
+#Look at the structure
+str(this.is.a.numeric.vector)
+#Depending on object type (numeric vector here) # We can do specific things
+this.is.a.numeric.vector*2
+```
+
+## Errors {.build}
+
+- When you try to do something to an object that it doesn't want to do, you get an error
+```{r character vector,error=T}
+
+#Let's make a character vector by quoting our numbers
+this.is.not.a.numeric.vector=c('1','2')
+#Print the vector
+print(this.is.not.a.numeric.vector)
+#Look at its structure
+str(this.is.not.a.numeric.vector)
+#Try to multiply a character vector by 2
+this.is.not.a.numeric.vector*2
+```
+
+## Data frames {.build}
+- If you use excel, data frames are like excel sheets
+- They have labeled columns and rows of data
+- They are the primary data object you will work with
+
+```{r data frame}
+#Bind the two vectors from above
+this.is.a.data.frame = data.frame(numbers=this.is.a.numeric.vector,
+                                  characters=this.is.not.a.numeric.vector)
+##
+print(this.is.a.data.frame)
+
+```
+
+
+## 8 years later...
+- R is very powerful and should eventually make your work easier, more beautiful,
+and faster. 
+- This will take some time, but the following example should make it clear
+why it's a valuable tool to at least be familiar with
+
+## Install and use libraries
+
+```{r setup, include=T,warning=F,message=F}
+library(tidyverse)
+library(dataRetrieval)
+library(sf) #Spatial package
+library(mapview) # interactive mapper
+library(xts) # Time series package
+library(dygraphs) #Time series plotting package
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir='..')
+```
+
+
+
+## Download and plot USGS gauging stations with discharge data {.build}
+```{r}
+#Download site information
+usgs.sites <- whatNWISsites(stateCd='CO',parameterCd='00060')
+
+#Print first six rows of data
+head(usgs.sites)
+#Print the data structure
+str(usgs.sites)
+
+#check names of dataset
+names(usgs.sites)
+#Plot the data in a map
+sites.map <- st_as_sf(usgs.sites,
+                      coords=c('dec_long_va','dec_lat_va'),
+                      crs=4326)
+
+#Examine structure of sites map
+str(sites.map)
+
+```
+
+## Dynamically plot USGS site locations
+```{r,out.width='100%'}
+mapviewOptions(leafletWidth='100%')
+mapview(sites.map)
+
+```
+
+
+
+## Download fort collins Q data for 2015-2019 {.build}
+```{r}
+#Site codes from map
+site_cd_foco <- c('06752260','06752280')
+
+
+usgs.site.data <- readNWISdata(sites=site_cd_foco,
+                               service='dv',
+                               parameterCd='00060',
+                               startDate='2015-01-01',
+                               endDate='2019-01-15')
+
+```
+
+## Change data structure {.build}
+```{r}
+#Look at names of data frame
+names(usgs.site.data)
+
+#simplify data 
+foco.data <- usgs.site.data %>%
+  #Rename site codes into site names
+  mutate(site_name=ifelse(site_no=='06752260','Lincoln','ELC')) %>%
+  #Rename and remove useless columns
+  dplyr::select(site_name,date=dateTime,q.cfs=X_00060_00003) %>%
+  #Filter out bad data
+  filter(q.cfs > 0)
+
+#Look at new data frame
+head(foco.data)
+```
+
+## Alter data for plotting {.build=T}
+```{r}
+## Alter data structure to match plotting library
+foco.wide <- spread(foco.data,
+                    key=site_name,
+                    value=q.cfs)
+
+#Convert to a timeseries object. 
+foco.ts <- xts(x=foco.wide %>%
+                 select(-date),
+               order.by=foco.wide$date)
+
+head(foco.ts)
+```
+
+
+## Dynamic plot of Q data
+```{r}
+dygraph(foco.ts)
+```
+
+## Summary
+- R is awesome
+- It will be used in this class
+- We'll help you use it
+- It's mostly copying and pasting the internet anyways (with attribution please!)
