@@ -41,6 +41,7 @@ larimer <- whatNWISsites(parameterCd='00060',countyCd='08069')
 There are many commands that help you look at your data these include: `str`,`View`,`head`,`names` and more. Run the code below to see what `head` returns. What about `str`? 
 
 ```{r head-vs-structure,exercise=TRUE}
+larimer <- whatNWISsites(parameterCd='00060',countyCd='08069')
 head(larimer)
 ```
 
@@ -48,7 +49,7 @@ head(larimer)
 
 We won't work with spatial data too much in this class, but the code below is at least a minimal example of how to plot your data so you can see
 what sites you are looking at. From the above code chunk we can see that there are two columns with spatial information `dec_lat_va` and
-`dec_long_va`. These indicate spatial data stored as decimel degrees. We can use this data to convert this `data.frame` into a `sf` object which
+`dec_long_va`. These indicate spatial data stored as decimal degrees. We can use this data to convert this `data.frame` into a `sf` object which
 acts a lot like a `.shp` file. The command we use to do this conversion is `st_as_sf`. 
 
 The function `st_as_sf` takes specific commands for this conversion to work this includes `x` which is our data.table `larimer`. 
@@ -91,11 +92,11 @@ available <- whatNWISdata(sites='06752260',
 str(available)
 ```
 
-### Pick a different site from our map and anser the following questions:
+### Pick a different site from our map and answer the following questions:
 
 - How much data is available? 
 - When was the data recorded? 
-- What are some outputs you don't understandin? 
+- What are some outputs you don't understanding? 
 
 
 ```{r whatdata-exercise, exercise=T}
@@ -153,7 +154,9 @@ own unique syntax that we won't dive deeply into, but there is a ton of help on 
 
 ```{r qplot}
 ggplot(clean.q,aes(x=dateTime,y=q.cfs)) + 
-  geom_point()
+  geom_point() + 
+  xlab('Date') + 
+  ylab('Discharge (cubic feet per second)')
 ```
 
 ### Clean and plot your data
@@ -174,14 +177,17 @@ Because of the way this tutorial works, none of your own objects are saved. So t
 This is a water quality class after all. All of the same architecture we used for the above analysis can be used to reproduce water quality data. Here we'll focus on using the same commands from above but changing the `parameterCd` from `00060` for discharge to `00095` for specific conductance. Specific conductance (SC) is a measure of the total ion strength in water, or salinity. SC data is far less common than discharge data, so first let's check if it's available at the Lincoln bridge site. 
 
 
+
+
 ```{r scdata}
 sc.available <- whatNWISdata(sites='06752260',
                                   parameterCd='00095')
 
+
 head(sc.available)
 ```
 
-We know data is availble, but it ends in 2017. Let's download it all and see how much data we get back
+We know data is available, but it ends in 2017. Let's download it all and see how much data we get back
 ```{r scdownload}
 
 sc.data <- readNWISdata(sites='06752260',
@@ -205,7 +211,10 @@ clean.sc <- sc.data %>%
   filter(sc.uscm >= 0)
 
 ggplot(clean.sc,aes(x=dateTime,y=sc.uscm)) + 
-  geom_point()
+  geom_point() + 
+  xlab('Date') +
+  ylab(expression(paste('SC (',mu,'s/cm)')))
+
 
 ```
 
@@ -240,7 +249,10 @@ Now we have a dataset with both q and sc data and we can plot Q on the x axis an
 
 ```{r qsc-plot}
 ggplot(q.sc,aes(x=q.cfs,y=sc.uscm)) + 
-  geom_point()
+  geom_point() + 
+  ggtitle('Q SC (Lincoln Bridge, FoCo)') + 
+  xlab('Discharge (cfs)') +
+  ylab(expression(paste('SC (',mu,'s/cm)')))
 
 ```
 
@@ -251,7 +263,9 @@ That doesn't show a lot of detail because Q varies so much in the time series. L
 ggplot(q.sc,aes(x=q.cfs,y=sc.uscm)) + 
   geom_point() + 
   scale_x_log10() + 
-  scale_y_log10()
+  scale_y_log10() + 
+  xlab('Discharge (cfs)') +
+  ylab(expression(paste('SC (',mu,'s/cm)')))
 
 ```
 
@@ -261,8 +275,58 @@ ggplot(q.sc,aes(x=q.cfs,y=sc.uscm)) +
 
 ### Reproduce SC - Q analysis for another station that has both Q and SC
 
-This may take some exploring, but find another station that has some Q and SC data, pair them together and plot the data
-grab a screenshot of this plot and submit it with a paragraph explaining:
+```{r,include=F,eval=F}
+
+#This code finds sites with plenty of SC data
+sc.co <- whatNWISdata(parameterCd='00095',
+                      stateCd='CO',
+                      service='dv')
+
+
+sc.dv <- sc.co %>%
+  filter(data_type_cd=='dv') %>%
+  distinct(site_no,.keep_all=T) %>%
+  filter(count_nu > 1000)
+
+
+
+
+```
+
+
+```{r,echo=F}
+sc.sites <- c("06619400", "06711565", "06752260", "06764000", 
+"07079200", "07079300", "07083710", "07086000", "07087200", 
+"07091200", "07094500", "07097000", "07099400", "07099969", 
+"07099970", "07105530", "07106000", "07106500", "07109500", 
+"07119700", "07120480", "07123675", "07124000", "07126200", 
+"07126300", "07126485", "07130500", "08251500", "09014050", 
+"09041090", "09041400", "09071100", "09071750", "09085000", 
+"09085100", "09085150", "09092970", "09093000", "09093500", 
+"09095000", "09095500", "09105000", "09106200", "09128000", 
+"09136100", "09144250", "09149500", "09152500", "09152600", 
+"09152650", "09152900", "09153300", "09163050", "09163310", 
+"09163340", "09163490", "09169500", "09171100", "09179200", 
+"09243800", "09246200", "09250600", "09251000", "09260000", 
+"09260050", "09304200", "09304800", "09306007", "09306022", 
+"09306042", "09306058", "09306175", "09306200", "09306222", 
+"09306235", "09306255", "09359020", "09361500", "09370820", 
+"09371400", "09371492", "09371520")
+
+sc.sf <- whatNWISdata(sites=sc.sites,
+                       parameterCd='00095') %>%
+  st_as_sf(.,coords=c('dec_long_va','dec_lat_va'),crs=4326)
+
+
+mapview(sc.sf)
+```
+
+<br> 
+
+This may take some exploring, but find another station that has some Q and SC data (more than 500 observations of each) using sites in the map above. Pair these datasets together and plot the data with Q on x axis and SC on the Y axis.
+
+Grab a screenshot of this plot (with correctly labeled axes, see code above) and submit it with a paragraph (in a docx or gdoc or pdf) explaining:
+
 
 - Where the data came from (gauge number, and location)
 - How much data was available?
