@@ -323,7 +323,7 @@ mapview(sc.sf)
 
 <br> 
 
-This may take some exploring, but find another station that has some Q and SC data (more than 500 observations of each) using sites in the map above. Pair these datasets together and plot the data with Q on x axis and SC on the Y axis.
+This may take some exploring, but find another station that has some Q and SC data (more than 500 observations of each) using sites in the map above. Check that the date for available data matches your downloading code, download no more than 5 years of Q and SC data. Pair these datasets together and plot the data with Q on x axis and SC on the Y axis.
 
 Grab a screenshot of this plot (with correctly labeled axes, see code above) and submit it with a paragraph (in a docx or gdoc or pdf) explaining:
 
@@ -334,7 +334,29 @@ Grab a screenshot of this plot (with correctly labeled axes, see code above) and
 - What is the relationship between Q and SC? Same as our analysis or different? 
 
 
-```{r qsc-yours,exercise=T,exercise.lines=15}
+```{r filter, exercise=TRUE,exercise.lines=15}
 
+```
+
+```{r filter-hint-1}
+#Does the available data match your code for downloading the data?
+#Is that true for both the Q and SC data? 
+sc.available <- whatNWISdata(sites='06752260',
+                                  parameterCd='00095')
+
+head(sc.available %>%
+       select(begin_date,end_date,count_nu))
+```
+
+```{r filter-hint-2}
+#For most sites you will need to check for matching dates and then change the 
+#code that downloads the data to match those dates ()
+q.data <- readNWISdata(sites='06752260',
+                               service='dv',
+                               parameterCd='00060',
+                               startDate='1990-02-01', #CHANGE THE DATE IF NEEDED
+                               endDate='2000-01-31') 
+
+## You'll have to change the dat for both the Q and SC data.
 ```
 
